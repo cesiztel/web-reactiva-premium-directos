@@ -1,7 +1,9 @@
+// Source: Refactoring by Martin Fowler
+
 function statement(invoice, plays) {
   let totalAmount = 0;
+  let volumenCredits = 0;
   let result = `Statement for ${invoice.customer}\n`;
-
   const format = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -9,69 +11,42 @@ function statement(invoice, plays) {
   }).format;
 
   for (let perf of invoice.performances) {
-    // Split loops
-    let thisAmount = amountFor(perf, playFor(perf)); // Inline function
+    const play = plays[perf.playID];
+    let thisAmount = 0;
+
+    switch (play.type) {
+      case "tragedy":
+        thisAmount = 40000;
+        if (perf.audience > 30) {
+          thisAmount += 1000 * (perf.audience - 30);
+        }
+        break;
+      case "comedy":
+        thisAmount = 30000;
+        if (perf.audience > 20) {
+          thisAmount += 10000 + 500 * (perf.audience - 20);
+        }
+        thisAmount += 300 * perf.audience;
+        break;
+      default:
+        throw new Error(`unknown type: ${play.type}`);
+    }
+
+    // add frequent renter points
+    volumenCredits += Math.max(perf.audience - 30, 0);
+    // add extra credit for every ten comedy attendees
+    if ("comedy" === play.type)
+    volumenCredits += Math.floor(perf.audience / 5);
 
     // print line for this order
-    result += ` ${playFor(perf).name}: ${format(thisAmount / 100)} (${
+    result += ` ${play.name}: ${format(thisAmount / 100)} (${
       perf.audience
     } seats)\n`;
     totalAmount += thisAmount;
   }
-
   result += `Amount owed is ${format(totalAmount / 100)}\n`;
-  result += `You earned ${totalVolumen(invoice)} credits\n`;
-
+  result += `You earned ${volumenCredits} credits\n`;
   return result;
-}
-
-function totalVolumen(invoice) {
-  let volumenCredits = 0;
-
-  for (let perf of invoice.performances) {
-    volumenCredits += calculateVolumen(perf);
-  }
-  return volumenCredits;
-}
-
-function calculateVolumen(perf) {
-  let volumenCredits = 0;
-
-  // add frequent renter points
-  volumenCredits += Math.max(perf.audience - 30, 0);
-  // add extra credit for every ten comedy attendees
-  if ("comedy" === playFor(perf).type)
-    volumenCredits += Math.floor(perf.audience / 5);
-
-  return volumenCredits;
-}
-
-function playFor(perf) {
-  return plays[perf.playID];
-}
-
-function amountFor(perf, play) {
-  let thisAmount = 0;
-
-  switch (play.type) {
-    case "tragedy":
-      thisAmount = 40000;
-      if (perf.audience > 30) {
-        thisAmount += 1000 * (perf.audience - 30);
-      }
-      break;
-    case "comedy":
-      thisAmount = 30000;
-      if (perf.audience > 20) {
-        thisAmount += 10000 + 500 * (perf.audience - 20);
-      }
-      thisAmount += 300 * perf.audience;
-      break;
-    default:
-      throw new Error(`unknown type: ${play.type}`);
-  }
-
-  return thisAmount;
 }
 
 invoice = {
