@@ -1,17 +1,6 @@
 <?php 
 
-# Programar a interfaces
-# Design Pattern: Builder
-
-interface SQLQueryBuilder {
-    public function select(string $table, array $fields);
-    public function where(string $field, string $value, string $operator = '=');
-    public function limit(int $start, int $offset);
-    // ===
-    public function getSQL(): string;
-}
-
-class MysqlQueryBuilder implements SQLQueryBuilder
+class MysqlQueryBuilder
 {
     private $query;
 
@@ -20,8 +9,6 @@ class MysqlQueryBuilder implements SQLQueryBuilder
         $this->query = new \stdClass();
         $this->query->base = "SELECT " . implode(", ", $fields) . " FROM " . $table;
         $this->query->type = 'select';
-
-        return $this;
     }
 
     public function where(string $field, string $value, string $operator = '=')
@@ -30,8 +17,6 @@ class MysqlQueryBuilder implements SQLQueryBuilder
             throw new \Exception("WHERE can only be added to SELECT, UPDATE OR DELETE");
         }
         $this->query->where[] = "$field $operator '$value'";
-
-        return $this;
     }
 
     public function limit(int $start, int $offset)
@@ -40,11 +25,9 @@ class MysqlQueryBuilder implements SQLQueryBuilder
             throw new \Exception("LIMIT can only be added to SELECT");
         }
         $this->query->limit = " LIMIT " . $start . ", " . $offset;
-
-        return $this;
     }
 
-    // muchos otros metodos
+    // ... muchos otros metodos
 
     public function getSQL(): string
     {
@@ -61,14 +44,14 @@ class MysqlQueryBuilder implements SQLQueryBuilder
     }
 }
 
-function clientCode(SQLQueryBuilder $queryBuilder)
+function clientCode(MysqlQueryBuilder $queryBuilder)
 {
     // ...
-    $query = $queryBuilder->select("users", ["name", "email", "password"])
-        ->where("age", 18, ">")
-        ->where("age", 30, "<")
-        ->limit(10, 20)
-        ->getSQL();
+    $queryBuilder->select("users", ["name", "email", "password"]);
+    $queryBuilder->where("age", 18, ">");
+    $queryBuilder->where("age", 30, "<");
+    $queryBuilder->limit(10, 20);
+    $query = $queryBuilder->getSQL();
 
     echo $query;
 
